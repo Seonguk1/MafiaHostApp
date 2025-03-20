@@ -31,8 +31,9 @@ const useAllPlayersReady = ()=>{
             case "assignRole": return "day";  // 역할 배정 → 낮 (투표)
             case "day": return "voting";          // 낮 → 투표
             case "voting": return "executionVoting";        // 투표 → 밤 (마피아 행동)
-            case "executionVoting": return "night";
-            case "night": return "day";           // 밤 → 낮 (반복)
+            case "executionVoting": return "resultVoting";
+            case "resultVoting": return "night";
+            case "night": return "resultNight";           // 밤 → 낮 (반복)
         }
     };
 

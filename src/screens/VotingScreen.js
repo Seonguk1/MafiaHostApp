@@ -6,62 +6,95 @@ import useGameStore from "../store/useGameStore";
 import useDatabaseRead from "../hooks/useDatabaseRead";
 import useDatabaseWrite from "../hooks/useDataBaseWrite";
 import useAllPlayersReady from "../hooks/useAllPlayersReady";
+import PlayerSelection from "../components/PlayerSelection";
 
 const VotingScreen = () => {
     const { roomId, myName, myIndex, numPlayers } = useGameStore();
     const { data, loading } = useDatabaseRead(`rooms/${roomId}`, true);
     const { updateData } = useDatabaseWrite();
-    // const [votes, setVotes] = useState(new Array(data?.players.length).fill(0));
     const { markPlayerReady } = useAllPlayersReady();
+    const currentStage = data?.gameState?.currentStage;
+    // useEffect(() => {
+    //     console.log('보트스크린 ')
+    //     if(!data?.gameState?.currentStage) return;
+    //     updateData(`rooms/${roomId}/gameState/stages/${data?.gameState?.currentStage}/voting`,
+    //         {
+    //             votes: new Array(numPlayers).fill(0), 
+    //             executionVotes: [0, 0],
+    //             isSkipped: false,
+    //             mostVotedPlayer: null,
+    //             executionVotes: [0, 0],
+    //             votingResult: null,
+    //         })
+    // }, [data?.gameState?.currentStage])
 
-    useEffect(()=>{
-        updateData(`rooms/${roomId}/gameState`, {votes: new Array(numPlayers).fill(0)})
-    }, [])
+    useEffect(() => {
+        
+        if (!data?.gameState?.stages[currentStage]?.voting?.votes) return;
+        const maxVotes = Math.max(...data?.gameState?.stages[currentStage]?.voting?.votes)
+        const mostVotedPlayer = data?.players[data?.gameState?.stages[currentStage]?.voting?.votes.indexOf(maxVotes)];
+        updateData(`rooms/${roomId}/gameState/stages/${currentStage}/voting`, { mostVotedPlayer: mostVotedPlayer.name })
+    }, [data?.gameState?.stages[currentStage]?.voting?.votes])
 
-    const findMostVotedPlayer = () => {
-        // const maxVotes = Math.max(...data?.gameState?.votes);
+    useEffect(() => {
+        if (data?.gameState?.currentPhase != 'resultVoting') return;
 
-        // // 최다 득표자 찾기 (동점일 경우 가장 먼저 나온 플레이어 반환)
-        // const mostVotedPlayer = data?.players[votes.indexOf(maxVotes)?.name];
+        const mostVotedPlayerIndex = data?.players.findIndex(player => player.name == data?.gameState?.stages[data?.gameState?.currentStage]?.voting?.mostVotedPlayer)
 
-        // return mostVotedPlayer;
-    }
+        if (data?.gameState?.stages[data?.gameState?.currentStage]?.voting?.executionVotes[0] > data?.gameState?.stages[data?.gameState?.currentStage]?.voting?.executionVotes[1]) {
+            updateData(`rooms/${roomId}/players/${mostVotedPlayerIndex}`, { life: 0 });
+        }
+
+        setTimeout(() => {
+            updateData(`rooms/${roomId}/gameState`, { currentPhase: 'night' });
+        }, 3000)
+    }, [data?.gameState?.currentPhase])
 
 
     return (
         <View>
             <Text>투표 하세요.</Text>
-            {data?.gameState?.currentPhase == 'voting' ? data?.players
-                ?.filter(player => player?.life)
-                .map((player, index) => (
+            {data?.gameState?.currentPhase == 'voting' &&
+                <View>
+                    <PlayerSelection></PlayerSelection>
+                    <TouchableOpacity onPress={() => {
+                        // 수정해야댐 
+                        updateData(`rooms/${roomId}/gameState`, { currentPhase: 'night' })
+                    }}>
+                        <Text> 건너뛰기 </Text>
+                    </TouchableOpacity>
+                </View>
+            }
+            {data?.gameState?.currentPhase == 'executionVoting' &&
+                <View>
+                    <Text> {data?.gameState?.stages[data?.gameState?.currentStage]?.voting?.mostVotedPlayer}를 처형하겠습니까? </Text>
                     <TouchableOpacity onPress={() => {
                         markPlayerReady();
-                        //(나중에) isReady == true 일때만 selectedPlayer 업데이트 해야함
-                        updateData(`rooms/${roomId}/players/${myIndex}`, { selectedPlayer: index });
-                        const newVotes = data?.gameState?.votes;
-                        newVotes[index] += 1;
-                        updateData(`rooms/${roomId}/gameState`, {votes: newVotes});
-                    
-                        console.log(`보트스: ${newVotes}`);
-                    }}>
-                        <Text>{player.name}</Text>
-                    </TouchableOpacity>
-                )) :
-                <View>
-                    <Text> {findMostVotedPlayer()}를 처형하겠습니까? </Text>
-                    <TouchableOpacity onPress={() => {
-                        setIsKilled(true);
-                        updateData(`rooms/${roomId}/gameState`, { currentPhase: 'night' })
+                        const newExecutionVotes = data?.gameState?.stages[data?.gameState?.currentStage]?.voting?.executionVotes;
+                        newExecutionVotes[0] += 1;
+                        updateData(`rooms/${roomId}/gameState/stages/${data?.gameState?.currentStage}/voting`, { executionVotes: newExecutionVotes })
                     }}>
                         <Text> 찬성 </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={() => {
-                        setIsKilled(false);
-                        updateData(`rooms/${roomId}/gameState`, { currentPhase: 'night' })
+                        markPlayerReady();
+                        const newExecutionVotes = data?.gameState?.stages[data?.gameState?.currentStage]?.voting?.executionVotes;
+                        newExecutionVotes[1] += 1;
+                        updateData(`rooms/${roomId}/gameState/stages/${data?.gameState?.currentStage}/voting`, { executionVotes: newExecutionVotes })
                     }}>
                         <Text> 반대 </Text>
                     </TouchableOpacity>
+                </View>
+            }
+            {data?.gameState?.currentPhase == 'resultVoting' &&
+                <View>
+                    <Text>
+                        {data?.gameState?.stages[data?.gameState?.currentStage]?.voting?.executionVotes[0] > data?.gameState?.stages[data?.gameState?.currentStage]?.voting?.executionVotes[1] ?
+                            `${data?.gameState?.stages[data?.gameState?.currentStage]?.voting?.mostVotedPlayer}가 처형되었습니다.` :
+                            `${data?.gameState?.stages[data?.gameState?.currentStage]?.voting?.mostVotedPlayer}가 처형되지 않았습니다.`
+                        }
+                    </Text>
                 </View>
             }
         </View>

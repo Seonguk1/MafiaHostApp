@@ -8,9 +8,18 @@ import useGameStore from "../store/useGameStore";
 import useAllPlayersReady from "../hooks/useAllPlayersReady";
 
 const RoleAssignmentScreen = () => {
-    const { roomId, myName,myIndex } = useGameStore();
+    const { roomId, myName,myIndex, setMyIndex, setMyRole, setNumPlayers } = useGameStore();
     const { data, loading } = useDatabaseRead(`rooms/${roomId}`, true);
+    const {updateData} = useDatabaseWrite();
     const {markPlayerReady} = useAllPlayersReady();
+
+    useEffect(()=>{
+        const myIndex = data?.players.findIndex(player => player.name === myName);
+        setMyIndex(myIndex);
+        setMyRole(data?.players[myIndex].role);
+        setNumPlayers(data?.players?.length);
+        
+    }, [data?.players?.length])
 
     return (
         <View>  

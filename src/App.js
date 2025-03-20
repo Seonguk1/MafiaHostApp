@@ -11,7 +11,7 @@ import DayScreen from './screens/DayScreen';
 import VotingScreen from './screens/VotingScreen';
 import NightScreen from './screens/NightScreen';
 import ResultScreen from './screens/ResultScreen';
-import GameFlow from './navigation/gameFlow';
+import GameFlow from './navigation/GameFlow';
 import GameTimer from './utils/GameTimer';
 
 

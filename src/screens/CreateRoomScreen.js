@@ -22,6 +22,7 @@ const CreateRoomScreen = () => {
             host: tempMyName,
             players: [{ name: tempMyName, life: 1 }],
             gameState: {currentPhase: "waiting", isActiveTimer: false},
+            roles: { '마피아': 1, '경찰': 1, '의사': 0, '시민': 0 }
         })
         navigation.navigate('RoomScreen');
     }

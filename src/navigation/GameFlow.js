@@ -16,7 +16,6 @@ const GameFlow = () => {
             navigation.navigate('RoleAssignmentScreen');
             break;
         case 'day':
-            // setInitialTime(20);
             navigation.navigate('DayScreen');
             break;
         case 'voting':

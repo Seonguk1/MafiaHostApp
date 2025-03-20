@@ -9,7 +9,7 @@ const GameTimer = () => {
     const { data, loading } = useDatabaseRead(`rooms/${roomId}`, true);
     const { updateData } = useDatabaseWrite();
     const [delay, setDelay] = useState(1000);
-    const [timeLeft, setTimeLeft] = useState(10);
+    const [timeLeft, setTimeLeft] = useState(3);
 
     useInterval(()=>{
         if(!data?.gameState?.isActiveTimer || myName!=data?.host) return;

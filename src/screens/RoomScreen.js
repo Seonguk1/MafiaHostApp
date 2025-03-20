@@ -9,9 +9,11 @@ import { useNavigation } from "@react-navigation/native";
 
 const RoomScreen = () => {
     const navigation = useNavigation();
-    const { roomId, myName, roles, setMyIndex, setNumPlayers } = useGameStore();
+    const { roomId, myName } = useGameStore();
     const { data, loading } = useDatabaseRead(`rooms/${roomId}`, true);
     const {updateData} = useDatabaseWrite();
+    const roles = data?.roles;
+    console.log(roles)
 
     const isRoomFull = () => {
         return data.players.length == Object.values(roles).reduce((sum, val) => sum + val, 0);
@@ -22,8 +24,6 @@ const RoomScreen = () => {
             Alert.alert('플레이어 수에 맞게 방을 설정하세요.');
             return;
         }
-        setMyIndex(data?.players.findIndex(player => player.name === myName));
-        setNumPlayers(data.players.length);
 
         const shuffle = (array) => {
             for (let i = array.length - 1; i > 0; i--) {
@@ -41,7 +41,12 @@ const RoomScreen = () => {
         for (let i = 0; i < data.players.length; i++) {
             updateData(`rooms/${roomId}/players/${i}`,{role: mixedRoles[i], isReady: false});
         }
-        updateData(`rooms/${roomId}/gameState`, {currentPhase: 'assignRole'});
+        updateData(`rooms/${roomId}/gameState`, {
+            currentPhase: 'assignRole', 
+            currentStage : 0,
+            timeLeft: 0,
+            stages: [],
+        });
     }
 
     return (
